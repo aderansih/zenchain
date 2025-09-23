@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swap ZTC → WZTC</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f0f23;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .swap-container {
+            background-color: #1a1a3e;
+            border-radius: 16px;
+            padding: 24px;
+            width: 360px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        .swap-box {
+            background-color: #2a2a5e;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .token-input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 18px;
+            width: 100%;
+            outline: none;
+        }
+        .token-label {
+            font-size: 14px;
+            color: #a0a0c0;
+            margin-bottom: 8px;
+        }
+        .swap-button {
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 16px;
+        }
+        .swap-button:hover {
+            background-color: #4338ca;
+        }
+        .status-message {
+            margin-top: 16px;
+            font-size: 14px;
+            color: #a0a0c0;
+            text-align: center;
+        }
+        .wallet-address {
+            font-size: 12px;
+            color: #a0a0c0;
+            margin-top: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="swap-container">
+        <h2 style="text-align: center; margin-bottom: 20px;">Swap ZTC → WZTC</h2>
+
+        <div class="swap-box">
+            <div class="token-label">From (ZTC)</div>
+            <input type="number" id="ztcAmount" class="token-input" placeholder="0.0" />
+        </div>
+
+        <div class="swap-box">
+            <div class="token-label">To (WZTC)</div>
+            <input type="number" id="wztcAmount" class="token-input" placeholder="0.0" readonly />
+        </div>
+
+        <button id="connectWallet" class="swap-button">Connect Wallet</button>
+        <button id="swapButton" class="swap-button" style="display: none;">Swap</button>
+
+        <div id="walletAddress" class="wallet-address"></div>
+        <div id="statusMessage" class="status-message"></div>
+    </div>
+
+    <script>
+        const RPC_URL = "https://zenchain-testnet.api.onfinality.io/public";
+        const CHAIN_ID = 8408;
+        const SWAP_CONTRACT_ADDRESS = "0x6bcc3cd4bbfbec41779b953db5c3d3f576fa8ae0";
+        const ZTC_ADDRESS = "0x0000000000000000000000000000000000000804";
+
+        let SWAP_ABI = [];
+
+fetch('./WrappedZTC.json')
+    .then(response => response.json())
+    .then(abi => {
+        SWAP_ABI = abi;
+        console.log("ABI loaded:", SWAP_ABI);
+    })
+    .catch(error => {
+        console.error("Failed to load ABI:", error);
+    });
+
+        let provider, signer, swapContract;
+
+        async function connectWallet() {
+            if (window.ethereum) {
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+
+                    const network = await provider.getNetwork();
+                    if (network.chainId !== CHAIN_ID) {
+                        try {
+                            await window.ethereum.request({
+                                method: 'wallet_switchEthereumChain',
+                                params: [{ chainId: ethers.utils.hexlify(CHAIN_ID) }]
+                            });
+                        } catch (err) {
+                            alert("Please switch to ZenChain Testnet in MetaMask.");
+                            return;
+                        }
+                    }
+
+                    swapContract = new ethers.Contract(SWAP_CONTRACT_ADDRESS, SWAP_ABI, signer);
+
+                    const address = await signer.getAddress();
+                    document.getElementById("walletAddress").innerText = `Wallet: ${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+                    document.getElementById("connectWallet").style.display = "none";
+                    document.getElementById("swapButton").style.display = "block";
+                    document.getElementById("statusMessage").innerText = "Wallet connected!";
+                } catch (error) {
+                    console.error("Wallet connection failed:", error);
+                    document.getElementById("statusMessage").innerText = "Failed to connect wallet.";
+                }
+            } else {
+                alert("Please install MetaMask.");
+            }
+        }
+
+        async function previewWZTC() {
+            const ztcAmount = document.getElementById("ztcAmount").value;
+            if (!ztcAmount || ztcAmount <= 0) return;
+
+            try {
+                const amountIn = ethers.utils.parseUnits(ztcAmount, 18);
+                const wztcOut = await swapContract.getWZTCForZTC(amountIn);
+                const formatted = ethers.utils.formatUnits(wztcOut, 18);
+                document.getElementById("wztcAmount").value = parseFloat(formatted).toFixed(6);
+            } catch (error) {
+                console.error("Preview error:", error);
+            }
+        }
+
+        async function executeSwap() {
+            const ztcAmount = document.getElementById("ztcAmount").value;
+            if (!ztcAmount || ztcAmount <= 0) {
+                alert("Enter a valid ZTC amount.");
+                return;
+            }
+
+            try {
+                document.getElementById("statusMessage").innerText = "Processing swap...";
+                const amountIn = ethers.utils.parseUnits(ztcAmount, 18);
+                const tx = await swapContract.swapZTCtoWZTC(amountIn);
+                await tx.wait();
+                document.getElementById("statusMessage").innerText = "Swap successful!";
+            } catch (error) {
+                console.error("Swap failed:", error);
+                document.getElementById("statusMessage").innerText = "Swap failed: " + error.message;
+            }
+        }
+
+        document.getElementById("connectWallet").addEventListener("click", connectWallet);
+        document.getElementById("ztcAmount").addEventListener("input", previewWZTC);
+        document.getElementById("swapButton").addEventListener("click", executeSwap);
+    </script>
+</body>
+</html>
