@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="gradHitamPutih" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="60%" stop-color="#aaaaaa" />
+      <stop offset="100%" stop-color="#111111" />
+    </linearGradient>
+
+    <linearGradient id="gradLangit" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4facfe" />
+      <stop offset="100%" stop-color="#b6eafd" />
+    </linearGradient>
+
+    <linearGradient id="gradLaut" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#014a7f" />
+      <stop offset="100%" stop-color="#001b3a" />
+    </linearGradient>
+
+    <g id="awan" fill="#ffffff">
+      <circle cx="50" cy="50" r="25" />
+      <circle cx="80" cy="40" r="35" />
+      <circle cx="110" cy="50" r="25" />
+      <rect x="50" y="50" width="60" height="25" rx="12" />
+    </g>
+  </defs>
+
+  <rect width="800" height="450" fill="url(#gradLangit)" />
+
+  <g opacity="0.5">
+    <animateTransform attributeName="transform" type="translate" from="-200 50" to="900 50" dur="40s" repeatCount="indefinite" />
+    <use href="#awan" x="0" y="0" transform="scale(0.8)" />
+  </g>
+  <g opacity="0.7">
+    <animateTransform attributeName="transform" type="translate" from="-300 120" to="900 120" dur="25s" repeatCount="indefinite" />
+    <use href="#awan" x="0" y="0" transform="scale(1)" />
+  </g>
+  <g opacity="0.9">
+    <animateTransform attributeName="transform" type="translate" from="-400 30" to="900 30" dur="15s" repeatCount="indefinite" />
+    <use href="#awan" x="0" y="0" transform="scale(1.3)" />
+  </g>
+
+  <rect y="450" width="800" height="150" fill="url(#gradLaut)" />
+  
+  <path d="M0 480 Q 200 470, 400 480 T 800 480" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.2" />
+  <path d="M0 530 Q 200 540, 400 530 T 800 530" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.1" />
+
+  <g id="kincir_angin">
+    <polygon points="375,480 425,480 405,200 395,200" fill="url(#gradHitamPutih)" />
+
+    <g>
+      <animateTransform attributeName="transform" type="rotate" from="0 400 200" to="360 400 200" dur="6s" repeatCount="indefinite" />
+      
+      <path d="M400,200 Q385,80 400,20 Q415,80 400,200" fill="url(#gradHitamPutih)" />
+      <path d="M400,200 Q385,80 400,20 Q415,80 400,200" fill="url(#gradHitamPutih)" transform="rotate(120 400 200)" />
+      <path d="M400,200 Q385,80 400,20 Q415,80 400,200" fill="url(#gradHitamPutih)" transform="rotate(240 400 200)" />
+      
+      <circle cx="400" cy="200" r="12" />
+    </g>
+  </g>
+</svg>
